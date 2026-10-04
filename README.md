@@ -24,6 +24,8 @@ codex login
 ./tutorial.sh doctor
 ```
 
+若运行脚本的环境无法访问 GitHub，可预先把 `course2md-macos-arm64`、`mlx-macos-arm64.metallib` 和 `pandoc-3.12-arm64-macOS.zip` 放在同一目录，然后运行 `VIDEO2DOCS_DOWNLOAD_DIR=/path/to/downloads ./setup.sh`。安装脚本仍会校验每个文件的 SHA-256；离线安装还需要本机已有 Homebrew、`uv`、`ffmpeg`、Codex CLI 和 Python 3.12。
+
 准备一个目录，放入**视频和对应字幕**（`.srt` 或 `.vtt`）；封面和独立音频可选。有字幕时无需下载语音识别模型。以 `/path/to/media` 为素材目录：
 
 ```bash

@@ -4,6 +4,7 @@ set -euo pipefail
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 BIN="$ROOT/.tools/bin"
 CACHE="$ROOT/.tools/cache/downloads"
+DOWNLOAD_DIR=${VIDEO2DOCS_DOWNLOAD_DIR:-}
 export UV_CACHE_DIR="${UV_CACHE_DIR:-$ROOT/.tools/cache/uv}"
 
 fail() { printf '错误：%s\n' "$1" >&2; exit 1; }
@@ -16,6 +17,9 @@ for tool in curl shasum unzip awk; do
   command -v "$tool" >/dev/null 2>&1 || fail "缺少基础命令：$tool"
 done
 command -v brew >/dev/null 2>&1 || fail "请先安装 Homebrew：https://brew.sh/"
+if [[ -n "$DOWNLOAD_DIR" && ! -d "$DOWNLOAD_DIR" ]]; then
+  fail "离线下载目录不存在：$DOWNLOAD_DIR"
+fi
 
 if ! command -v uv >/dev/null 2>&1; then brew install uv; fi
 if ! command -v ffmpeg >/dev/null 2>&1 || ! command -v ffprobe >/dev/null 2>&1; then
@@ -25,6 +29,20 @@ if ! command -v codex >/dev/null 2>&1; then brew install --cask codex; fi
 
 mkdir -p "$BIN" "$CACHE" "$UV_CACHE_DIR"
 
+fetch_file() {
+  local url=$1 target=$2 source
+  if [[ -n "$DOWNLOAD_DIR" ]]; then
+    source="$DOWNLOAD_DIR/${url##*/}"
+    if [[ ! -f "$source" ]]; then
+      printf '缺少离线文件：%s\n' "$source" >&2
+      return 1
+    fi
+    cp "$source" "$target"
+  else
+    curl -fsSL --retry 5 --retry-all-errors --retry-delay 1 --max-time 180 "$url" -o "$target"
+  fi
+}
+
 download_binary() {
   local url=$1 expected=$2 target=$3 executable=$4 temporary
   if [[ -f "$target" && $(sha256 "$target") == "$expected" ]]; then
@@ -33,7 +51,7 @@ download_binary() {
     return
   fi
   temporary=$(mktemp "$BIN/.download.XXXXXX")
-  if ! curl -fsSL --retry 5 --retry-all-errors --retry-delay 1 --max-time 120 "$url" -o "$temporary"; then
+  if ! fetch_file "$url" "$temporary"; then
     rm -f "$temporary"
     fail "下载失败：$url"
   fi
@@ -63,7 +81,7 @@ else
   archive=$(mktemp "$CACHE/.pandoc.XXXXXX")
   binary=$(mktemp "$BIN/.pandoc.XXXXXX")
   url="https://github.com/jgm/pandoc/releases/download/3.12/pandoc-3.12-arm64-macOS.zip"
-  if ! curl -fsSL --retry 5 --retry-all-errors --retry-delay 1 --max-time 180 "$url" -o "$archive"; then
+  if ! fetch_file "$url" "$archive"; then
     rm -f "$archive" "$binary"
     fail "下载失败：$url"
   fi
