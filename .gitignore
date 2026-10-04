@@ -1,0 +1,18 @@
+# Local media, generated tutorials, downloaded tools, and models
+.data/
+tutorials/
+.tools/
+.models/
+
+# Python and test artifacts
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+.coverage
+htmlcov/
+
+# Local configuration and OS files
+.env
+.env.*
+.DS_Store
