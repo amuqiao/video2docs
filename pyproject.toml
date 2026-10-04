@@ -1,0 +1,9 @@
+[project]
+name = "video2docs"
+version = "0.1.0"
+description = "Turn offline tutorial videos into illustrated Markdown and HTML guides."
+requires-python = ">=3.12,<3.13"
+dependencies = []
+
+[tool.uv]
+package = false
